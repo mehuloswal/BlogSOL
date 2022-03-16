@@ -3,26 +3,35 @@ use anchor_lang::prelude::*;
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
-// pub mod blog {
-//     use super::*;
-//     pub fn initialize(ctx: Context<Initialize>) -> ProgramResult {
-//         Ok(())
-//     }
-// }
-pub fn init_blog(ctx: Context<InitBlog>) -> ProgramResult {
-    // get accounts from ctx
-    let blog_account = &mut ctx.accounts.blog_account;
-    let genesis_post_account = &mut ctx.accounts.genesis_post_account;
-    let authority = &mut ctx.accounts.authority;
+pub mod blog {
+    use super::*;
+    pub fn init_blog(ctx: Context<InitBlog>) -> ProgramResult {
+        // get accounts from ctx
+        let blog_account = &mut ctx.accounts.blog_account;
+        let genesis_post_account = &mut ctx.accounts.genesis_post_account;
+        let authority = &mut ctx.accounts.authority;
 
-    // sets the blog state
-    blog_account.authority = authority.key();
-    blog_account.current_post_key = genesis_post_account.key();
+        // sets the blog state
+        blog_account.authority = authority.key();
+        blog_account.current_post_key = genesis_post_account.key();
 
-    Ok(())
-}
-pub fn signup_user(ctx: Context<SignupUser>, name: String, avatar: String) -> ProgramResult {
-    Ok(())
+        Ok(())
+    }
+    pub fn signup_user(ctx: Context<SignupUser>, name: String, avatar: String) -> ProgramResult {
+        let user_account = &mut ctx.accounts.user_account;
+        let authority = &mut ctx.accounts.authority;
+        user_account.name = name;
+        user_account.avatar = avatar;
+        user_account.authority = authority.key();
+        Ok(())
+    }
+
+    pub fn update_user(ctx: Context<UpdateUser>, name: String, avatar: String) -> ProgramResult {
+        let user_account = &mut ctx.accounts.user_account;
+        user_account.name = name;
+        user_account.avatar = avatar;
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -43,6 +52,12 @@ pub struct SignupUser<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct UpdateUser<'info> {
+    #[account(mut, has_one = authority)]
+    pub user_account: Account<'info, UserState>,
+    pub authority: Signer<'info>,
+}
 #[account]
 pub struct BlogState {
     pub current_post_key: Pubkey,
